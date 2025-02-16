@@ -122,7 +122,6 @@ function StartSettlement() {
                 <div className="container">
                     <h4 className="page-title">{userName}의 남은 정산 금액</h4>
                     <div className="start-settlement-list">
-                        
                         {pendingPayments.length > 0 ? (
                             pendingPayments.map((record, index) => (
                                 <div key={index} className="start-settlement-item">
@@ -141,7 +140,8 @@ function StartSettlement() {
                             </div>
                         )}
                     </div>
-
+                    <span className="text-button">전체 송금 내역 확인하기</span>
+                    
                     <h2 className="page-title">{userName}에게 아직 송금하지 않았어요</h2>
                     <p className="total-amount">
                         총 <span className="highlight-amount">{moneyRecords.reduce((sum, rec) => sum + rec.amount, 0).toLocaleString()}원</span>
@@ -167,6 +167,7 @@ function StartSettlement() {
                             </div>
                         )}
                     </div>
+                    <span className="text-button">전체 송금 현황 확인하기</span>
                     {/* 🔹 정산 완료한 팀원 */}
                     <h4 className="team-list-title">정산 완료한 팀원</h4>
                     <div className="completed-members">
