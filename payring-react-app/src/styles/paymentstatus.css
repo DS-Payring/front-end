@@ -1,5 +1,11 @@
+/*paymentstatus.css*/
+
+html, body {
+  overflow: hidden; /* 전체 페이지에서 스크롤을 비활성화 */
+  height: 100%; /* 페이지 높이를 100%로 설정 */
+}
+
 .payment-status-page {
-  margin-top: 30px;
   width: 100%;
 }
 
@@ -91,8 +97,20 @@
 }
 
 .room-list {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   list-style: none;
   padding: 0;
+  max-height: 400px; /* room-list의 높이를 고정, 필요에 맞게 조정 */
+  overflow-y: auto; /* 세로 스크롤 가능 */
+}
+
+/* 스크롤바 숨기기 */
+.room-list::-webkit-scrollbar {
+  width: 0px;
+  background: transparent; /* 스크롤바를 투명하게 설정 */
 }
 
 .room-item {
@@ -102,6 +120,7 @@
   border-bottom: 1px solid #eee;
   width: 100%;
   position: relative; /* 방 아이템에 상대 위치를 설정 */
+  box-sizing: border-box; /* padding 포함한 전체 너비 100%로 설정 */
 }
 
 .room-image {

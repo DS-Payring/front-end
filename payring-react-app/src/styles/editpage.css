@@ -1,4 +1,4 @@
-/* EditPage 스타일 */
+/* EditPage css */
 .edit-page-container {
   width: 90%;
   overflow: hidden; 
@@ -144,7 +144,8 @@
   }
   
   .save-btn-wrapper button {
-    width: 100%; /* 버튼의 너비를 80%로 설정, 필요에 따라 조정 가능 */
+    font-weight: bold;
+    width: 80%; /* 버튼의 너비를 80%로 설정, 필요에 따라 조정 가능 */
     padding: 15px 0; /* 버튼 안쪽 여백 설정 */
     font-size: 18px; /* 버튼 텍스트 크기 조정 */
     box-shadow: 3px 3px 6px 2px rgba(0, 0, 0, 0.2);
