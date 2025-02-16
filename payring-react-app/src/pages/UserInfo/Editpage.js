@@ -40,10 +40,10 @@ const EditPage = () => {
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Fetched User Info:', data); // 사용자 정보를 출력하여 확인
-                    setUserInfo(data);  // 사용자 정보 상태 업데이트
+                    setUserInfo(data.data);  // 사용자 정보 상태 업데이트
                     setEditedInfo({
-                        userName: data.userName || '',  // 초기값 빈 문자열
-                        payUrl: data.payUrl || '',      // 초기값 빈 문자열
+                        userName: data.data.userName || '',  // 초기값 빈 문자열
+                        payUrl: data.data.payUrl || '',      // 초기값 빈 문자열
                     });
                     setLoading(false);
                 } else {
@@ -72,8 +72,14 @@ const EditPage = () => {
             return;
         }
 
+        // 값이 없으면 저장 안 되도록 처리
         if (!editedInfo.userName || editedInfo.userName.trim() === '') {
             alert('사용자명을 입력하세요.');
+            return;
+        }
+
+        if (!editedInfo.payUrl || editedInfo.payUrl.trim() === '') {
+            alert('카카오페이 URL을 입력하세요.');
             return;
         }
 
@@ -98,6 +104,12 @@ const EditPage = () => {
         } catch (err) {
             alert('서버 오류가 발생했습니다.');
         }
+    };
+
+    const handleFocus = (e) => {
+        // 입력란이 포커스 될 때 기존 값을 지웁니다.
+        const { name } = e.target;
+        setEditedInfo((prev) => ({ ...prev, [name]: '' }));
     };
 
     if (loading) {
@@ -129,8 +141,9 @@ const EditPage = () => {
                             <input
                                 type="text"
                                 name="userName"
-                                value={editedInfo.userName} // 수정된 사용자명 표시
+                                value={editedInfo.userName || ''} // 수정된 사용자명 표시
                                 onChange={handleInputChange}
+                                onFocus={handleFocus} // 입력란 클릭 시 값 지우기
                             />
                         </div>
 
@@ -146,22 +159,23 @@ const EditPage = () => {
                             <input
                                 type="text"
                                 name="bankName"
-                                value={userInfo.bankName}
+                                value={userInfo.bankName || '등록 안 됨'}
                                 readOnly
                             />
                             <label>계좌번호</label>
                             <input
                                 type="text"
                                 name="accountNumber"
-                                value={userInfo.accountNumber}
+                                value={userInfo.accountNumber || '등록 안 됨'}
                                 readOnly
                             />
                             <label>카카오페이 URL</label>
                             <input
                                 type="url"
                                 name="payUrl"
-                                value={editedInfo.payUrl} // 수정된 카카오페이 URL 표시
+                                value={editedInfo.payUrl || ''} // 수정된 카카오페이 URL 표시
                                 onChange={handleInputChange}
+                                onFocus={handleFocus} // 입력란 클릭 시 값 지우기
                             />
                         </div>
                     </div>

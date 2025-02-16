@@ -9,20 +9,17 @@ const Invite = () => {
 
     // 쿠키에서 token을 가져오는 함수
     const getCookie = (name) => {
-        const cookieString = document.cookie;
-        const cookies = cookieString.split('; ').reduce((acc, cookie) => {
-            const [key, value] = cookie.split('=');
-            acc[key] = value;
-            return acc;
-        }, {});
-        return cookies[name] || null;
+        return document.cookie
+            .split('; ')
+            .find(row => row.startsWith(`${name}=`))
+            ?.split('=')[1] || null;
     };
 
     // 초대 목록 불러오기
     useEffect(() => {
         const fetchInvites = async () => {
             try {
-                const token = getCookie('token'); // 쿠키에서 토큰 가져오기
+                const token = getCookie('token');
                 if (!token) {
                     setError('로그인이 필요합니다.');
                     return;
@@ -36,15 +33,14 @@ const Invite = () => {
                     },
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    setInvites(data.data); // 서버 응답이 { "data": [...] } 형태라면 data.data로 설정
-                } else {
-                    setError(data.message || '초대 목록을 불러오는 데 실패했습니다.');
+                if (!response.ok) {
+                    throw new Error('초대 목록을 불러오는 데 실패했습니다.');
                 }
+
+                const data = await response.json();
+                setInvites(data.data || []);
             } catch (err) {
-                setError('서버에 연결할 수 없습니다.');
+                setError(err.message || '서버에 연결할 수 없습니다.');
             }
         };
 
@@ -54,16 +50,15 @@ const Invite = () => {
     // 초대 수락 API 호출
     const handleAccept = async (id) => {
         try {
-            const token = getCookie('token'); // 쿠키에서 토큰 가져오기
+            const token = getCookie('token');
             if (!token) {
                 alert('로그인이 필요합니다.');
                 return;
             }
 
-            // 초대 목록에서 roomId를 가져오기
             const invite = invites.find(invite => invite.id === id);
-            if (!invite) {
-                alert('초대를 찾을 수 없습니다.');
+            if (!invite?.roomId) {
+                alert('초대 정보를 찾을 수 없습니다.');
                 return;
             }
 
@@ -91,16 +86,15 @@ const Invite = () => {
     // 초대 거절 API 호출
     const handleReject = async (id) => {
         try {
-            const token = getCookie('token'); // 쿠키에서 토큰 가져오기
+            const token = getCookie('token');
             if (!token) {
                 alert('로그인이 필요합니다.');
                 return;
             }
 
-            // 초대 목록에서 roomId를 가져오기
             const invite = invites.find(invite => invite.id === id);
-            if (!invite) {
-                alert('초대를 찾을 수 없습니다.');
+            if (!invite?.roomId) {
+                alert('초대 정보를 찾을 수 없습니다.');
                 return;
             }
 
@@ -139,8 +133,8 @@ const Invite = () => {
                     {invites.length === 0 ? (
                         <p className="no-invites">받은 초대가 없습니다.</p>
                     ) : (
-                        invites.map(invite => (
-                            <div key={invite.id} className="invite-card">
+                        invites.map((invite, index) => (
+                            <div key={invite.id || `invite-${index}`} className="invite-card">
                                 <div className="invite-info">
                                     <p className="room-name"><strong>{invite.roomName}</strong></p>
                                     <p className="member-count">참여 인원 {invite.members}명</p>

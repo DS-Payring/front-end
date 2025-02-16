@@ -36,8 +36,8 @@ function App() {
         <Route path="/create-room" element={<CreateRoom/>} />
         <Route path="/room-detail/:id" element={<RoomDetail />} />
         <Route path="/money-record/:id" element={<MoneyRecord />} />
-        <Route path="/money-record-detail/:paymentId" element={<MoneyRecordDetail />} />
-        <Route path="/start-settlement/:id" element={<StartSettlement />} />
+        <Route path="/room-detail/:roomId/money-record-detail/:paymentId" element={<MoneyRecordDetail />} />
+        <Route path="/start-settlement/:roomId" element={<StartSettlement />} />
       </Routes>
     </Router>
   );

@@ -224,11 +224,11 @@
     border-radius: 5px;
 }
 
-.clear > img {
+.empty-message-container > img {
     display: block;
     margin: 0 auto;
 }
-.clear > p {
+.settlemnet-user-name {
     font-weight: bold;
     color: #000000;
 }
