@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import axios from "axios";
 import Header from "../../components/Header";
-import InviteModal from "../../components/InviteModal"; // ✅ 팀원 초대 모달 
-import DeleteConfirmModal from "../../components/DeleteConfirmModal"; // ✅ 삭제 확인 모달 
+import InviteModal from "../../components/InviteModal"; // ✅ 팀원 초대 모달
+import DeleteConfirmModal from "../../components/DeleteConfirmModal"; // ✅ 삭제 확인 모달
 import "../../styles/RoomDetail.css";
 import "../../styles/Modal.css";
 import defaultImage from "../../img/defaultImage.png";
@@ -19,7 +19,6 @@ const getCookie = (name) => {
 };
 
 console.log("🔎 현재 토큰 값:", getCookie("token"));
-
 
 function RoomDetail() {
     const navigate = useNavigate();
@@ -161,18 +160,18 @@ function RoomDetail() {
             alert("정산방 정보가 없습니다. 다시 시도해 주세요.");
             return;
         }
-    
+
         try {
             const token = getCookie("token");
             if (!token) {
                 alert("로그인이 필요합니다.");
                 return;
             }
-    
+
             const response = await axios.post(`${API_BASE_URL}/api/rooms/${roomId}/payments/start`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-    
+
             console.log("✅ 정산 시작 성공:", response.data);
             navigate(`/start-settlement/${roomId}`); // ✅ state 제거
         } catch (error) {
@@ -180,13 +179,12 @@ function RoomDetail() {
             alert("정산 시작 요청에 실패했습니다.");
         }
     };
-    
+
     const handleInviteSuccess = () => {
         console.log("✅ 초대 성공 후 팀원 목록 갱신");
         fetchTeamMembers(); // 팀원 목록 다시 불러오기
     };
-    
-    
+
     return (
         <div className="mobile-container">
             <div className="header-wrapper">
@@ -202,8 +200,6 @@ function RoomDetail() {
                         >
                             정산하기
                         </button>
-
-
                     </div>
 
                     <h3 className="team-title">{roomName}’s 팀원</h3>
@@ -239,7 +235,7 @@ function RoomDetail() {
                                     {item.isWriter && (
                                         <X className="delete-icon" onClick={() => openDeleteModal(item.id)} />
                                     )}
-                                    <button className="detail-button" onClick={() => navigate(`money-record-detail/${item.id}`)}>
+                                    <button className="detail-button" onClick={() => {console.log("🛠️ 이동할 URL:", `/money-record-detail/${item.id}`); navigate(`/money-record-detail/${item.id}`)}}>
                                         상세 보기
                                     </button>
                                 </div>
@@ -261,16 +257,14 @@ function RoomDetail() {
                     {/* ✅ 팀원 초대 모달 */}
                     {isInviteModalOpen && (
                         <InviteModal 
-                            roomId={roomId} 
-                            onClose={() => setIsInviteModalOpen(false)}
-                            onInvite={handleInviteSuccess} // ✅ 초대 후 실행할 함수 전달
+                            onClose={() => setIsInviteModalOpen(false)} 
+                            onSuccess={handleInviteSuccess} 
                         />
                     )}
                 </div>
             </div>
         </div>
     );
-
 }
 
 export default RoomDetail;

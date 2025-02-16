@@ -55,7 +55,7 @@ const GroupList = () => {
             const data = await response.json();
             return data.data || null;
         } catch (err) {
-            console.error(`🚨 방 정보 조회 실패 (roomId: ${roomId}):`, err.message);
+           /*  console.error(`🚨 방 정보 조회 실패 (roomId: ${roomId}):`, err.message); */
             return null;
         }
     };
@@ -69,49 +69,54 @@ const GroupList = () => {
                 if (!token) {
                     throw new Error("로그인 정보가 필요합니다.");
                 }
-    
+        
                 console.log("🔍 현재 저장된 토큰:", token);
-    
+        
                 const response = await fetch("https://storyteller-backend.site/api/rooms", {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-    
+        
                 if (response.status === 403) {
                     throw new Error("🚨 권한이 없습니다. 로그인 상태를 확인하세요.");
                 }
-    
+        
                 if (!response.ok) {
                     throw new Error(`API 요청 실패: ${response.statusText}`);
                 }
-    
+        
                 const text = await response.text();
                 if (!text) {
                     console.warn("⚠️ 방 목록 응답이 비어 있음");
                     return;
                 }
-    
+        
                 const data = JSON.parse(text);
                 if (data.status !== 200) {
                     throw new Error("데이터를 불러오는 데 실패했습니다.");
                 }
-    
+        
                 const roomData = data.data;
                 console.log("✅ 방 목록 조회 성공:", roomData);
-    
-                // ✅ 상세 정보 가져오기
+        
+                // ✅ 상세 정보 가져오기 (403 Forbidden 방 필터링)
                 const detailedGroups = await Promise.all(
                     roomData.map(async (group) => {
                         const roomDetails = await fetchRoomDetails(group.roomId);
-                        return roomDetails ? { ...group, ...roomDetails } : null;
+                        if (roomDetails) {
+                            return { ...group, ...roomDetails };
+                        } else {
+                            /* console.warn(`⚠️ 접근 권한이 없는 방 제외 (roomId: ${group.roomId})`); */
+                            return null;
+                        }
                     })
                 );
-    
+        
                 const filteredGroups = detailedGroups.filter((group) => group !== null);
                 setGroups(filteredGroups);
-    
+        
             } catch (err) {
                 console.error("🚨 Error during fetch:", err.message);
                 setError(err.message);
@@ -119,6 +124,7 @@ const GroupList = () => {
                 setLoading(false);
             }
         };
+        
     
         fetchGroups();
     }, []);
@@ -144,7 +150,7 @@ const GroupList = () => {
             });
     
             if (response.status === 403) {
-                alert(`🚨 방 삭제 실패: 방 삭제 권한이 없습니다. (ID: ${roomId})`);
+                alert(`🚨 방 삭제 실패: 이미 정산이 시작된 방은 나갈 수 없습니다. (ID: ${roomId})`);
                 return;
             }
     
