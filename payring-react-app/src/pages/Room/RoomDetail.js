@@ -3,14 +3,20 @@ import { useParams, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import axios from "axios";
 import Header from "../../components/Header";
-import InviteModal from "../../components/InviteModal"; // ✅ 팀원 초대 모달 추가
-import DeleteConfirmModal from "../../components/DeleteConfirmModal"; // ✅ 삭제 확인 모달 추가
+import InviteModal from "../../components/InviteModal"; // ✅ 팀원 초대 모달 
+import DeleteConfirmModal from "../../components/DeleteConfirmModal"; // ✅ 삭제 확인 모달 
 import "../../styles/RoomDetail.css";
 import "../../styles/Modal.css";
 import defaultImage from "../../img/defaultImage.png";
 import invite from "../../img/invite.png";
 
 const API_BASE_URL = "https://storyteller-backend.site";
+
+// ✅ 쿠키에서 특정 쿠키 값을 가져오는 함수
+const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+    return match ? match[2] : null;
+};
 
 function RoomDetail() {
     const navigate = useNavigate();
@@ -25,7 +31,7 @@ function RoomDetail() {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
+        const token = getCookie("accessToken");
         if (!token) {
             alert("로그인이 필요합니다.");
             navigate("/login");
@@ -37,7 +43,7 @@ function RoomDetail() {
         if (!roomId) return;
 
         try {
-            const token = localStorage.getItem("accessToken");
+            const token = getCookie("accessToken");
             if (!token) return;
 
             const response = await axios.get(`${API_BASE_URL}/api/rooms/${roomId}/members`, {
@@ -61,7 +67,7 @@ function RoomDetail() {
 
         const fetchRoomName = async () => {
             try {
-                const token = localStorage.getItem("accessToken");
+                const token = getCookie("accessToken");
                 if (!token) return;
 
                 const response = await axios.get(`${API_BASE_URL}/api/rooms/${roomId}`, {
@@ -83,7 +89,7 @@ function RoomDetail() {
         setIsFetching(true);
 
         try {
-            const token = localStorage.getItem("accessToken");
+            const token = getCookie("accessToken");
             if (!token) return;
 
             const response = await axios.get(`${API_BASE_URL}/api/rooms/${roomId}/payments`, {
@@ -124,7 +130,7 @@ function RoomDetail() {
         if (!deleteTargetId) return;
 
         try {
-            const token = localStorage.getItem("accessToken");
+            const token = getCookie("accessToken");
             if (!token) {
                 alert("로그인이 필요합니다.");
                 return;
@@ -147,31 +153,31 @@ function RoomDetail() {
         }
     };
 
-    // ✅ 정산 시작 요청 API 호출
     const startSettlement = async () => {
         if (!roomId) {
             alert("정산방 정보가 없습니다. 다시 시도해 주세요.");
             return;
         }
-
+    
         try {
-            const token = localStorage.getItem("accessToken");
+            const token = getCookie("accessToken");
             if (!token) {
                 alert("로그인이 필요합니다.");
                 return;
             }
-
+    
             const response = await axios.post(`${API_BASE_URL}/api/rooms/${roomId}/payments/start`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
+    
             console.log("✅ 정산 시작 성공:", response.data);
-            navigate(`/start-settlement/${roomId}`, { state: { roomId, roomName, teamMembers, payments } });
+            navigate(`/start-settlement/${roomId}`); // ✅ state 제거
         } catch (error) {
             console.error("🚨 정산 시작 요청 실패:", error);
             alert("정산 시작 요청에 실패했습니다.");
         }
     };
+    
 
     return (
         <div className="mobile-container">
@@ -184,14 +190,11 @@ function RoomDetail() {
                         <h1 className="room-title">{roomName}의 정산방</h1>
                         <button
                             className="settlement-button"
-                            onClick={() =>
-                                navigate(`/start-settlement/${roomId}`, { 
-                                    state: { roomId, roomName, teamMembers, payments }
-                                })
-                            }
+                            onClick={startSettlement} // ✅ 기존 navigate에서 startSettlement로 변경
                         >
                             정산하기
                         </button>
+
 
                     </div>
 
@@ -228,7 +231,7 @@ function RoomDetail() {
                                     {item.isWriter && (
                                         <X className="delete-icon" onClick={() => openDeleteModal(item.id)} />
                                     )}
-                                    <button className="detail-button" onClick={() => navigate(`/money-record-detail/${item.id}`)}>
+                                    <button className="detail-button" onClick={() => navigate(`money-record-detail/${item.id}`)}>
                                         상세 보기
                                     </button>
                                 </div>
@@ -246,6 +249,7 @@ function RoomDetail() {
             </div>
         </div>
     );
+
 }
 
 export default RoomDetail;

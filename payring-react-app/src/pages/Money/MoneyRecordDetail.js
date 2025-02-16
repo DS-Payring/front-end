@@ -14,6 +14,13 @@ function MoneyRecordDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // ✅ 쿠키에서 토큰 가져오는 함수
+    const getTokenFromCookies = () => {
+        const cookies = document.cookie.split("; ");
+        const tokenCookie = cookies.find(row => row.startsWith("accessToken="));
+        return tokenCookie ? tokenCookie.split("=")[1] : null;
+    };
+
     useEffect(() => {
         console.log("✅ 상세보기 페이지 진입 | paymentId:", paymentId);
 
@@ -26,7 +33,7 @@ function MoneyRecordDetail() {
 
         const fetchPaymentDetail = async () => {
             try {
-                const token = localStorage.getItem("accessToken");
+                const token = getTokenFromCookies();
                 if (!token) {
                     alert("로그인이 필요합니다.");
                     navigate("/login");

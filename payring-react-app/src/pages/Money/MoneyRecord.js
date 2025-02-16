@@ -5,56 +5,31 @@ import Header from "../../components/Header";
 import '../../styles/styles.css';
 import '../../styles/MoneyRecord.css';
 
+const API_BASE_URL = "https://storyteller-backend.site";
+
+// ✅ 쿠키에서 특정 쿠키 값을 가져오는 함수
+const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+    return match ? match[2] : null;
+};
+
 function MoneyRecord() {
     const navigate = useNavigate();
     const { id: roomId } = useParams();
+
+    useEffect(() => {
+        console.log("🔍 useParams()에서 가져온 roomId:", roomId);
+        if (!roomId) {
+            alert("잘못된 접근입니다.");
+            navigate("/"); // ✅ roomId가 없으면 홈으로 이동
+        }
+    }, [roomId]);
+
     const [title, setTitle] = useState('');
     const [amount, setAmount] = useState('');
     const [memo, setMemo] = useState('');
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-    const [isAuthorized, setIsAuthorized] = useState(false);
-
-    useEffect(() => {
-        checkRoomAccess();
-    }, [roomId]);
-
-    // ✅ 사용자가 방에 참여했는지 확인하는 함수
-    const checkRoomAccess = async () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-            alert("로그인이 필요합니다.");
-            navigate("/");
-            return;
-        }
-
-        try {
-            const response = await axios.get(`https://storyteller-backend.site/api/rooms/${roomId}/members`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            const members = response.data.data;
-            if (!members || members.length === 0) {
-                alert("이 방에 참여하고 있지 않습니다. 접근할 수 없습니다.");
-                navigate("/main");
-                return;
-            }
-
-            const userEmail = localStorage.getItem("userEmail");
-            const isMember = members.some(member => member.email === userEmail);
-
-            if (!isMember) {
-                alert("이 방에 참여하고 있지 않습니다. 접근할 수 없습니다.");
-                navigate("/main");
-            } else {
-                setIsAuthorized(true);
-            }
-        } catch (error) {
-            console.error("🚨 방 접근 권한 확인 실패:", error);
-            alert("방 접근 권한을 확인할 수 없습니다.");
-            navigate("/main");
-        }
-    };
 
     // ✅ 이미지 업로드 핸들러
     const handleImageUpload = (event) => {
@@ -71,39 +46,44 @@ function MoneyRecord() {
 
     // ✅ 정산 등록 API 호출 (req JSON + 이미지 모두 FormData로 전송)
     const submitRecord = async () => {
-        const token = localStorage.getItem("accessToken");
+        const token = getCookie("accessToken");
         if (!token) {
             alert("로그인이 필요합니다.");
             navigate("/");
             return;
         }
 
+        const parsedRoomId = roomId && !isNaN(roomId) ? parseInt(roomId, 10) : null;
+        if (!parsedRoomId) {
+            alert("잘못된 방 ID입니다.");
+            return;
+        }
+
         const formData = new FormData();
         const reqData = {
-            roomId: roomId,
-            amount: parseInt(amount),
+            roomId: parsedRoomId,
+            amount: parseInt(amount, 10),
             title,
             memo,
         };
 
-        // JSON 데이터를 Blob으로 변환 후 FormData에 추가
         formData.append("req", new Blob([JSON.stringify(reqData)], { type: "application/json" }));
 
-        // 이미지 파일 추가 (이미지가 존재할 때만)
         if (image) {
             formData.append("image", image);
         }
 
         try {
-            console.log("🚀 API 요청 시작:", `https://storyteller-backend.site/api/rooms/payments`);
+            console.log("🚀 API 요청 시작:", `${API_BASE_URL}/api/rooms/payments`);
+            console.log("🔍 요청 데이터:", reqData);
+            console.log("🔍 쿠키에서 가져온 accessToken:", token);
 
             const response = await axios.post(
-                `https://storyteller-backend.site/api/rooms/payments`,
+                `${API_BASE_URL}/api/rooms/payments`,
                 formData,
                 {
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
+                    withCredentials: true,
                 }
             );
 
@@ -178,11 +158,7 @@ function MoneyRecord() {
                         />
                     </div>
 
-                    {isAuthorized ? (
-                        <button className="register-button" onClick={submitRecord}>등록하기</button>
-                    ) : (
-                        <button className="register-button" disabled>권한 없음</button>
-                    )}
+                    <button className="register-button" onClick={submitRecord}>등록하기</button>
                 </div>
             </div>
         </div>
