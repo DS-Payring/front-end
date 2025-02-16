@@ -93,7 +93,7 @@ function InviteModal({ roomId, onClose, onInvite }) {
         setIsLoading(true);
     
         try {
-            const token = getCookie("accessToken"); // ✅ 쿠키에서 accessToken 가져오기
+            const token = getCookie("token"); // ✅ 쿠키에서 accessToken 가져오기
             if (!token) {
                 alert("로그인이 필요합니다.");
                 return;

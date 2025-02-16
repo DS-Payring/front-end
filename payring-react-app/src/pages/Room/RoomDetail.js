@@ -18,6 +18,9 @@ const getCookie = (name) => {
     return match ? match[2] : null;
 };
 
+console.log("🔎 현재 토큰 값:", getCookie("token"));
+
+
 function RoomDetail() {
     const navigate = useNavigate();
     const { id: roomId } = useParams();
@@ -31,7 +34,7 @@ function RoomDetail() {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     useEffect(() => {
-        const token = getCookie("accessToken");
+        const token = getCookie("token");
         if (!token) {
             alert("로그인이 필요합니다.");
             navigate("/login");
@@ -43,7 +46,7 @@ function RoomDetail() {
         if (!roomId) return;
 
         try {
-            const token = getCookie("accessToken");
+            const token = getCookie("token");
             if (!token) return;
 
             const response = await axios.get(`${API_BASE_URL}/api/rooms/${roomId}/members`, {
@@ -67,7 +70,7 @@ function RoomDetail() {
 
         const fetchRoomName = async () => {
             try {
-                const token = getCookie("accessToken");
+                const token = getCookie("token");
                 if (!token) return;
 
                 const response = await axios.get(`${API_BASE_URL}/api/rooms/${roomId}`, {
@@ -89,7 +92,7 @@ function RoomDetail() {
         setIsFetching(true);
 
         try {
-            const token = getCookie("accessToken");
+            const token = getCookie("token");
             if (!token) return;
 
             const response = await axios.get(`${API_BASE_URL}/api/rooms/${roomId}/payments`, {
@@ -130,7 +133,7 @@ function RoomDetail() {
         if (!deleteTargetId) return;
 
         try {
-            const token = getCookie("accessToken");
+            const token = getCookie("token");
             if (!token) {
                 alert("로그인이 필요합니다.");
                 return;
@@ -160,7 +163,7 @@ function RoomDetail() {
         }
     
         try {
-            const token = getCookie("accessToken");
+            const token = getCookie("token");
             if (!token) {
                 alert("로그인이 필요합니다.");
                 return;
@@ -176,6 +179,11 @@ function RoomDetail() {
             console.error("🚨 정산 시작 요청 실패:", error);
             alert("정산 시작 요청에 실패했습니다.");
         }
+    };
+    
+    const handleInviteSuccess = () => {
+        console.log("✅ 초대 성공 후 팀원 목록 갱신");
+        fetchTeamMembers(); // 팀원 목록 다시 불러오기
     };
     
 
@@ -243,8 +251,21 @@ function RoomDetail() {
                         정산 추가하기
                     </button>
 
-                    <DeleteConfirmModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handleConfirmDelete} />
-                    {isInviteModalOpen && <InviteModal roomId={roomId} onClose={() => setIsInviteModalOpen(false)} />}
+                    {/* ✅ 삭제 확인 모달 */}
+                    <DeleteConfirmModal 
+                        isOpen={isModalOpen} 
+                        onClose={() => setIsModalOpen(false)} 
+                        onConfirm={handleConfirmDelete} 
+                    />
+                    
+                    {/* ✅ 팀원 초대 모달 */}
+                    {isInviteModalOpen && (
+                        <InviteModal 
+                            roomId={roomId} 
+                            onClose={() => setIsInviteModalOpen(false)}
+                            onInvite={handleInviteSuccess} // ✅ 초대 후 실행할 함수 전달
+                        />
+                    )}
                 </div>
             </div>
         </div>

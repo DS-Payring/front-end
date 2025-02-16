@@ -36,7 +36,7 @@ function StartSettlement() {
             return;
         }
 
-        const token = getCookie("accessToken");
+        const token = getCookie("token");
         if (!token) {
             alert("로그인이 필요합니다.");
             navigate("/login");
@@ -77,7 +77,7 @@ function StartSettlement() {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setCompletedMembers(response.data.data.map(member => ({
-                    user: member.name,
+                    user: member.userName,
                     profile: member.profileImage || profile, // 기본 이미지 대체
                 })));
             } catch (error) {
@@ -91,7 +91,7 @@ function StartSettlement() {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setPendingMembers(response.data.data.map(member => ({
-                    user: member.name,
+                    user: member.userName,
                     profile: member.profileImage || profile, // 기본 이미지 대체
                     amount: member.amount,
                     pending: true, // 정산 중 여부 추가
@@ -141,7 +141,7 @@ function StartSettlement() {
                         )}
                     </div>
                     <span className="text-button">전체 송금 내역 확인하기</span>
-                    
+
                     <h2 className="page-title">{userName}에게 아직 송금하지 않았어요</h2>
                     <p className="total-amount">
                         총 <span className="highlight-amount">{moneyRecords.reduce((sum, rec) => sum + rec.amount, 0).toLocaleString()}원</span>
@@ -175,7 +175,7 @@ function StartSettlement() {
                             completedMembers.map((member, index) => (
                                 <div key={index} className="profile-container">
                                     <img src={member.profile} alt="프로필" className="profile-image" />
-                                    <span className="user-name">{member.user}</span>
+                                    <span className="settlement-user-name">{member.user}</span>
                                 </div>
                             ))
                         ) : (
@@ -192,7 +192,7 @@ function StartSettlement() {
                             pendingMembers.map((member, index) => (
                                 <div key={index} className="profile-container">
                                     <img src={member.profile} alt="프로필" className="profile-image" />
-                                    <span className="user-name">{member.user}</span>
+                                    <span className="settlement-user-name">{member.user}</span>
                                     <span className="amount">{(member.amount || 0).toLocaleString()}원</span> 
                                     {member.pending && <button className="reminder-button">독촉하기</button>}
                                 </div>

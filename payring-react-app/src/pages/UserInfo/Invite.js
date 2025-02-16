@@ -16,36 +16,32 @@ const Invite = () => {
     };
 
     // 초대 목록 불러오기
-    useEffect(() => {
-        const fetchInvites = async () => {
-            try {
-                const token = getCookie('token');
-                if (!token) {
-                    setError('로그인이 필요합니다.');
-                    return;
-                }
-
-                const response = await fetch('/api/rooms/invitations', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('초대 목록을 불러오는 데 실패했습니다.');
-                }
-
-                const data = await response.json();
-                setInvites(data.data || []);
-            } catch (err) {
-                setError(err.message || '서버에 연결할 수 없습니다.');
+    const fetchInvites = async () => {
+        try {
+            const token = getCookie('token');
+            if (!token) {
+                setError('로그인이 필요합니다.');
+                return;
             }
-        };
 
-        fetchInvites();
-    }, []);
+            const response = await fetch('/api/rooms/invitations', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('초대 목록을 불러오는 데 실패했습니다.');
+            }
+
+            const data = await response.json();
+            setInvites(data.data || []);
+        } catch (err) {
+            setError(err.message || '서버에 연결할 수 없습니다.');
+        }
+    };
 
     // 초대 수락 API 호출
     const handleAccept = async (id) => {
@@ -73,7 +69,8 @@ const Invite = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setInvites(invites.filter(invite => invite.id !== id));
+                // 초대 수락 후, 전체 초대 목록을 다시 불러옵니다
+                fetchInvites();  // 다시 목록을 불러오는 함수 호출
                 alert('초대를 수락했습니다.');
             } else {
                 alert(data.message || '초대 수락에 실패했습니다.');
@@ -109,7 +106,8 @@ const Invite = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setInvites(invites.filter(invite => invite.id !== id));
+                // 초대 거절 후, 전체 초대 목록을 다시 불러옵니다
+                fetchInvites();  // 다시 목록을 불러오는 함수 호출
                 alert('초대를 거절했습니다.');
             } else {
                 alert(data.message || '초대 거절에 실패했습니다.');
@@ -118,6 +116,11 @@ const Invite = () => {
             alert('서버에 연결할 수 없습니다.');
         }
     };
+
+    // 페이지가 처음 로드될 때 초대 목록을 불러옵니다
+    useEffect(() => {
+        fetchInvites();
+    }, []);
 
     return (
         <div className='mobile-container'>
