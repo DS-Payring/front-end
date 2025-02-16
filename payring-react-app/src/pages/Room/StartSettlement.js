@@ -6,6 +6,7 @@ import "../../styles/styles.css";
 import "../../styles/StartSettlement.css";
 import clearImage from "../../img/clear.png";
 import profile from "../../img/defaultImage.png";
+import ReminderModal from "../../components/ReminderModal";
 
 
 // ✅ 쿠키에서 특정 값을 가져오는 함수
@@ -34,8 +35,36 @@ function StartSettlement() {
         return member ? member.userName : "알 수 없음";
     };
     
+    const [selectedReminder, setSelectedReminder] = useState(null); // 🔹 선택된 멤버 저장 (모달용)
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const handleReminderClick = (member) => {
+        if (member.receiverInfos.length > 0) {
+            setSelectedReminder(member);
+            setIsModalOpen(true);
+        } else {
+            alert("독촉할 대상이 없습니다.");
+        }
+    };
 
+    useEffect(() => {
+        const fetchInProgressPayments = async () => {
+            try {
+                const response = await axios.get(`https://storyteller-backend.site/api/rooms/${roomId}/payments/in-progress`);
+                setPendingMembers(response.data.data.map(member => ({
+                    userId: member.userId,
+                    userName: member.userName,
+                    profile: member.profileImage || "default-profile.png",
+                    totalAmount: member.totalLeftAmount,
+                    receiverInfos: member.receiverInfos || [],
+                })));
+            } catch (error) {
+                console.error("🚨 Error fetching in-progress payments:", error);
+            }
+        };
+
+        fetchInProgressPayments();
+    }, []);
 
     console.log("📌 useParams() roomId:", roomId);
     console.log("현재 URL:", window.location.pathname);
@@ -96,22 +125,31 @@ function StartSettlement() {
                 console.error("Error fetching finished payments:", error);
             }
         };
+
         
         const fetchInProgressPayments = async () => {
             try {
                 const response = await axios.get(`https://storyteller-backend.site/api/rooms/${roomId}/payments/in-progress`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                setPendingMembers(response.data.data.map(member => ({
-                    user: member.userName,
-                    profile: member.profileImage || profile, // 기본 이미지 대체
-                    amount: member.amount,
-                    pending: true, // 정산 중 여부 추가
-                })));
+        
+                console.log("📌 정산 진행 중 데이터:", response.data);
+        
+                // API 응답을 UI에 맞게 변환
+                const formattedPendingMembers = response.data.data.map(member => ({
+                    userId: member.userId,
+                    userName: member.userName,
+                    profile: member.profileImage || profile,  // 기본 이미지 설정
+                    totalAmount: member.totalLeftAmount,  // 총 미정산 금액
+                    receiverInfos: member.receiverInfos || []  // 송금해야 하는 리스트
+                }));
+        
+                setPendingMembers(formattedPendingMembers);
             } catch (error) {
-                console.error("Error fetching in-progress payments:", error);
+                console.error("🚨 Error fetching in-progress payments:", error);
             }
         };
+        
         
         const fetchPayments = async () => {
             try {
@@ -255,21 +293,50 @@ function StartSettlement() {
                     {/* 🔹 정산 중인 팀원 */}
                     <h2 className="team-list-title">정산 중인 팀원</h2>
                     <div className="pending-members">
-                        {pendingMembers.length > 0 ? (
-                            pendingMembers.map((member, index) => (
-                                <div key={index} className="profile-container">
-                                    <img src={member.profile} alt="프로필" className="profile-image" />
-                                    <span className="settlement-user-name">{member.user}</span>
-                                    <span className="amount">{(member.amount || 0).toLocaleString()}원</span> 
-                                    {member.pending && <button className="reminder-button">독촉하기</button>}
-                                </div>
-                            ))
-                        ) : (
-                            <div className="empty-message-container">
-                                <p className="empty-message">현재 정산 중인 팀원이 없습니다.</p>
+                    {pendingMembers.length > 0 ? (
+                        pendingMembers.map((member) => (
+                            <div key={member.userId} className="profile-container">
+                                {/* ✅ 프로필 클릭 시 alert 표시 */}
+                                <img 
+                                    src={member.profile} 
+                                    alt="프로필" 
+                                    className="profile-image"
+                                    onClick={() => {
+                                        if (member.receiverInfos.length > 0) {
+                                            const message = member.receiverInfos
+                                                .map(receiver => `${receiver.receiverName} → ${receiver.amount.toLocaleString()}원`)
+                                                .join("\n");
+                                            alert(`📌 ${member.userName}님의 정산 정보:\n\n${message}`);
+                                        } else {
+                                            alert(`${member.userName}님은 송금해야 할 내역이 없습니다.`);
+                                        }
+                                    }}
+                                    style={{ cursor: "pointer" }}
+                                />
+
+                                {/* ✅ 유저 이름 */}
+                                <span className="settlement-user-name">{member.userName}</span>
+
+                                {/* ✅ 총 미정산 금액 표시 */}
+                                <span className="amount">{(member.totalAmount || 0).toLocaleString()}원</span> 
+
+                                {/* ✅ 독촉하기 버튼 (모달 열기) */}
+                                {member.receiverInfos.some(receiver => receiver.isSenderForMe) && (
+                                    <button className="reminder-button" onClick={() => handleReminderClick(member)}>
+                                        독촉하기
+                                    </button>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        ))
+                    ) : (
+                        <div className="empty-message-container">
+                            <p className="empty-message">현재 정산 중인 팀원이 없습니다.</p>
+                        </div>
+                    )}
+
+                    {/* ✅ 모달 추가 */}
+                    {isModalOpen && <ReminderModal member={selectedReminder} roomId={roomId} onClose={() => setIsModalOpen(false)} />}
+                </div>
 
                     {/* 🔹 정산 요청 내역 */}
                     <h4 className="team-list-title">정산 요청 내역</h4>
@@ -291,9 +358,9 @@ function StartSettlement() {
                                     </div>
                                     <div className="settlement-actions">
 
-                                        <button className="detail-button" onClick={() => navigate(`/room-detail/${roomId}/money-record-detail/${item.id}`)}>
-                                            상세 보기
-                                        </button>
+                                    <button className="detail-button" onClick={() => {console.log("🛠️ 이동할 URL:", `/money-record-detail/${item.id}`); navigate(`/money-record-detail/${item.id}`)}}>
+                                        상세 보기
+                                    </button>     
                                     </div>
                                 </div>
                             ))
