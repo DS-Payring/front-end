@@ -39,6 +39,14 @@ body {
     flex-grow: 1; /* 컨텐츠가 남은 공간을 차지하도록 설정 */
 }
 
+.content-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.container::-webkit-scrollbar {
+    display: none;
+}
+
 /* 헤더 고정 */
 .header-container {
     width: 100%;
@@ -70,3 +78,4 @@ body {
     max-width: 402px;
     padding: 10px 0;
 }
+
