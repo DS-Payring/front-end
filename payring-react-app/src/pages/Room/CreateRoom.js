@@ -171,7 +171,7 @@ function CreateRoom() {
                         <input type="file" accept="image/*" id="fileInput" hidden onChange={handleFileChange} />
                     </div>
 
-                    <h2 className="section-title">팀원 추가</h2>
+{/*                     <h2 className="section-title">팀원 추가</h2>
                     <div className="email-container">
                         <input
                             className="input-field email-input"
@@ -182,7 +182,7 @@ function CreateRoom() {
                         <Search className="search-icon" size={20} onClick={addEmailToList} />
                     </div>
 
-                    {/* 🔹 추가된 이메일 리스트 */}
+                    {/* 🔹 추가된 이메일 리스트 
                     <div className="email-list">
                         {teamEmails.map((email, index) => (
                             <div key={index} className="email-item">
@@ -190,7 +190,7 @@ function CreateRoom() {
                                 <X className="delete-icon" size={20} onClick={() => removeEmail(email)} />
                             </div>
                         ))}
-                    </div>
+                    </div> */}
 
                     <button className="primary-button" onClick={createRoom}>방 생성하기</button>
                 </div>

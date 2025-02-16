@@ -25,93 +25,150 @@ const GroupList = () => {
         return cookies[name] || null;
     };
 
+
+    const fetchRoomDetails = async (roomId) => {
+        try {
+            const token = getCookie("token");
+            if (!token) {
+                console.error("🚨 토큰 없음. 로그인 필요.");
+                return;
+            }
+    
+            console.log(`🔍 방 정보 요청 (roomId: ${roomId}) - 토큰:`, token);
+    
+            const response = await fetch(`https://storyteller-backend.site/api/rooms/${roomId}`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+    
+            if (response.status === 403) {
+                throw new Error(`🚨 방 정보 요청 실패 (403): 접근 권한 없음`);
+            }
+    
+            if (!response.ok) {
+                throw new Error(`🚨 API 요청 실패: ${response.statusText}`);
+            }
+    
+            const data = await response.json();
+            return data.data || null;
+        } catch (err) {
+            console.error(`🚨 방 정보 조회 실패 (roomId: ${roomId}):`, err.message);
+            return null;
+        }
+    };
+    
+    
+
     useEffect(() => {
         const fetchGroups = async () => {
             try {
                 const token = getCookie("token");
-
                 if (!token) {
                     throw new Error("로그인 정보가 필요합니다.");
                 }
-
-                console.log("Fetching groups...");
-
+    
+                console.log("🔍 현재 저장된 토큰:", token);
+    
                 const response = await fetch("https://storyteller-backend.site/api/rooms", {
                     method: "GET",
                     headers: {
-                        "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,
                     },
                 });
-
+    
+                if (response.status === 403) {
+                    throw new Error("🚨 권한이 없습니다. 로그인 상태를 확인하세요.");
+                }
+    
                 if (!response.ok) {
                     throw new Error(`API 요청 실패: ${response.statusText}`);
                 }
-
-                const data = await response.json();
-
-                if (data.status === 200) {
-                    const roomData = data.data;
-                    console.log("Fetched room data:", roomData);
-
-                    const detailedGroups = await Promise.all(
-                        roomData.map(async (group) => {
-                            try {
-                                const roomResponse = await fetch(
-                                    `https://storyteller-backend.site/api/rooms/${group.roomId}`,
-                                    {
-                                        headers: { Authorization: `Bearer ${token}` },
-                                    }
-                                );
-                                const roomDetails = await roomResponse.json();
-                                return roomDetails.data
-                                    ? { ...group, ...roomDetails.data } // ✅ 상세 정보 추가
-                                    : null;
-                            } catch (err) {
-                                console.error(`Error fetching room details for ${group.roomId}:`, err);
-                                return null;
-                            }
-                        })
-                    );
-
-                    const filteredGroups = detailedGroups.filter((group) => group !== null);
-                    setGroups(filteredGroups);
-
-                    const initialActiveState = filteredGroups.reduce((acc, group) => {
-                        acc[group.roomId] = true;
-                        return acc;
-                    }, {});
-                    setActiveGroups(initialActiveState);
-                } else {
+    
+                const text = await response.text();
+                if (!text) {
+                    console.warn("⚠️ 방 목록 응답이 비어 있음");
+                    return;
+                }
+    
+                const data = JSON.parse(text);
+                if (data.status !== 200) {
                     throw new Error("데이터를 불러오는 데 실패했습니다.");
                 }
+    
+                const roomData = data.data;
+                console.log("✅ 방 목록 조회 성공:", roomData);
+    
+                // ✅ 상세 정보 가져오기
+                const detailedGroups = await Promise.all(
+                    roomData.map(async (group) => {
+                        const roomDetails = await fetchRoomDetails(group.roomId);
+                        return roomDetails ? { ...group, ...roomDetails } : null;
+                    })
+                );
+    
+                const filteredGroups = detailedGroups.filter((group) => group !== null);
+                setGroups(filteredGroups);
+    
             } catch (err) {
-                console.error("Error during fetch:", err.message);
+                console.error("🚨 Error during fetch:", err.message);
                 setError(err.message);
             } finally {
                 setLoading(false);
             }
         };
-
+    
         fetchGroups();
     }, []);
+    
 
     const deleteRoom = async (roomId) => {
         const token = getCookie("token");
-
+    
+        if (!token) {
+            alert("🚨 로그인 상태를 확인해주세요.");
+            return;
+        }
+    
         try {
-            console.log(`Deleting room with ID: ${roomId}`);
-            await fetch(`https://storyteller-backend.site/api/rooms/${roomId}`, {
+            console.log(`🗑️ 방 삭제 요청: ID ${roomId}`);
+    
+            const response = await fetch(`https://storyteller-backend.site/api/rooms/${roomId}`, {
                 method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
             });
-
-            setGroups((prevGroups) => prevGroups.filter((group) => group.roomId !== roomId));
-            console.log(`Room with ID: ${roomId} deleted successfully`);
+    
+            if (response.status === 403) {
+                alert(`🚨 방 삭제 실패: 방 삭제 권한이 없습니다. (ID: ${roomId})`);
+                return;
+            }
+    
+            if (response.status === 204) {
+                console.log(`✅ 방 삭제 성공 (No Content 응답)`);
+                setGroups((prevGroups) => prevGroups.filter((group) => group.roomId !== roomId));
+                alert(`✅ 방 삭제 성공: ${roomId}`);
+            } else {
+                const result = await response.json();
+                if (result.status !== 200) {
+                    throw new Error(result.message || "방 삭제 실패");
+                }
+                console.log(`✅ 방 삭제 성공: ${roomId}`);
+                setGroups((prevGroups) => prevGroups.filter((group) => group.roomId !== roomId));
+                alert(`✅ 방 삭제 성공: ${roomId}`);
+            }
         } catch (error) {
-            console.error(`Error deleting room with ID: ${roomId}:`, error);
+            console.error(`❌ 방 삭제 실패 (ID: ${roomId}):`, error.message);
+            alert(`❌ 방 삭제 실패: ${error.message}`);
         }
     };
+    
+    
+    
 
     const toggleGroup = (roomId, event) => {
         event.stopPropagation();
@@ -127,34 +184,53 @@ const GroupList = () => {
         });
     };
 
-    // ✅ 방 클릭 시 이동할 경로 결정하는 함수
     const handleGroupClick = async (roomId) => {
         const token = getCookie("token");
-
+    
+        if (!token) {
+            alert("🚨 로그인 상태가 필요합니다.");
+            return;
+        }
+    
         try {
+            console.log(`🔍 방 상태 확인 요청: ID ${roomId}`);
+    
             const response = await fetch(`https://storyteller-backend.site/api/rooms/${roomId}`, {
                 method: "GET",
-                headers: { Authorization: `Bearer ${token}` },
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
             });
-
+    
             if (!response.ok) {
                 throw new Error(`API 요청 실패: ${response.statusText}`);
             }
-
+    
             const roomDetails = await response.json();
-            const isSettlementStarted = roomDetails.data?.isSettlementStarted || false;
-
-            // ✅ 정산이 시작된 방이라면 `start-settlement/:id`로 이동
-            // ✅ 아니라면 `room-detail/:id`로 이동
-            if (isSettlementStarted) {
+            console.log("🔍 방 상세 정보 응답:", roomDetails);
+    
+            if (!roomDetails.data) {
+                throw new Error("방 정보를 가져올 수 없습니다.");
+            }
+    
+            const roomStatus = roomDetails.data.roomStatus; // ✅ roomStatus 값 가져오기
+            console.log(`✅ 방 ${roomId}의 상태: ${roomStatus}`);
+    
+            // ✅ roomStatus에 따라 이동할 페이지 결정
+            if (roomStatus === "SETTLING") {
+                console.log(`✅ 정산 진행 중인 방: ${roomId} → /start-settlement/${roomId}`);
                 navigate(`/start-settlement/${roomId}`);
             } else {
+                console.log(`✅ 정산 시작되지 않은 방: ${roomId} → /room-detail/${roomId}`);
                 navigate(`/room-detail/${roomId}`);
             }
         } catch (err) {
             console.error("🚨 방 상세 정보 조회 실패:", err.message);
+            alert("🚨 방 정보를 불러오는 데 실패했습니다.");
         }
     };
+        
 
     if (loading) return <p>로딩 중...</p>;
     if (error) return <p>에러 발생: {error}</p>;

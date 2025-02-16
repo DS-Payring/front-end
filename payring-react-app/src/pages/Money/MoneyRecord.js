@@ -46,7 +46,7 @@ function MoneyRecord() {
 
     // ✅ 정산 등록 API 호출 (req JSON + 이미지 모두 FormData로 전송)
     const submitRecord = async () => {
-        const token = getCookie("accessToken");
+        const token = getCookie("token");
         if (!token) {
             alert("로그인이 필요합니다.");
             navigate("/");
@@ -76,7 +76,7 @@ function MoneyRecord() {
         try {
             console.log("🚀 API 요청 시작:", `${API_BASE_URL}/api/rooms/payments`);
             console.log("🔍 요청 데이터:", reqData);
-            console.log("🔍 쿠키에서 가져온 accessToken:", token);
+            console.log("🔍 쿠키에서 가져온 token:", token);
 
             const response = await axios.post(
                 `${API_BASE_URL}/api/rooms/payments`,
