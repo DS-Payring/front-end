@@ -8,7 +8,7 @@ import "../../styles/MoneyRecordDetail.css";
 const API_BASE_URL = "https://storyteller-backend.site";
 
 function MoneyRecordDetail() {
-    const { paymentId } = useParams(); // ✅ URL에서 paymentId 가져오기
+    const { roomId, paymentId } = useParams(); // ✅ URL에서 paymentId 가져오기
     const navigate = useNavigate();
     const [record, setRecord] = useState(null); // ✅ API에서 받은 데이터를 저장할 상태
     const [loading, setLoading] = useState(true);
@@ -23,6 +23,7 @@ function MoneyRecordDetail() {
 
     useEffect(() => {
         console.log("✅ 상세보기 페이지 진입 | paymentId:", paymentId);
+        console.log("✅ roomId:", roomId); // roomId 값 확인
 
         if (!paymentId || paymentId === "undefined") {
             console.error("🚨 paymentId가 없습니다.");
@@ -63,7 +64,7 @@ function MoneyRecordDetail() {
         };
 
         fetchPaymentDetail();
-    }, [paymentId, navigate]);
+    }, [paymentId, roomId, navigate]);
 
     if (loading) {
         return <div className="loading">⏳ 로딩 중...</div>;
