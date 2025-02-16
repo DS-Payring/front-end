@@ -186,7 +186,7 @@ function RoomDetail() {
         fetchTeamMembers(); // 팀원 목록 다시 불러오기
     };
     
-
+    
     return (
         <div className="mobile-container">
             <div className="header-wrapper">

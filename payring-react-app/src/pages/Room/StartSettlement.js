@@ -7,6 +7,7 @@ import "../../styles/StartSettlement.css";
 import clearImage from "../../img/clear.png";
 import profile from "../../img/defaultImage.png";
 
+
 // ✅ 쿠키에서 특정 값을 가져오는 함수
 const getCookie = (name) => {
     const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
@@ -23,6 +24,17 @@ function StartSettlement() {
     const [loading, setLoading] = useState(true);
     const [completedMembers, setCompletedMembers] = useState([]);
     const [pendingMembers, setPendingMembers] = useState([]);
+    const [payments, setPayments] = useState([]);
+    const [totalAmount, setTotalAmount] = useState(0);
+    const [teamMembers, setTeamMembers] = useState([]); // ✅ 정산방 팀원 목록 상태
+
+    const getUserName = (userId) => {
+        if (!teamMembers.length) return "알 수 없음";
+        const member = teamMembers.find(member => member.userId === userId || member.teamMemberId === userId);
+        return member ? member.userName : "알 수 없음";
+    };
+    
+
 
 
     console.log("📌 useParams() roomId:", roomId);
@@ -101,13 +113,68 @@ function StartSettlement() {
             }
         };
         
+        const fetchPayments = async () => {
+            try {
+                console.log(`🚀 GET 요청: /api/rooms/${roomId}/payments`);
+        
+                const response = await axios.get(`https://storyteller-backend.site/api/rooms/${roomId}/payments`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+        
+                console.log("📌 정산 요청 응답 데이터:", response.data); // ✅ 응답 데이터 확인
+        
+                if (response.data && response.data.data) {
+                    setTotalAmount(response.data.data.totalAmount || 0); // ✅ 총 정산 금액 설정
+                    setPayments(response.data.data.payments || []); // ✅ payments 리스트 저장
+                } else {
+                    console.warn("⚠️ 정산 요청 응답에 'data' 필드가 없음:", response.data);
+                    setPayments([]); // 데이터가 없을 경우 빈 배열 설정
+                    setTotalAmount(0);
+                }
+            } catch (error) {
+                console.error("🚨 정산 요청 목록 조회 실패:", error);
+                if (error.response) {
+                    console.error("📌 서버 응답:", error.response.data);
+                }
+            }
+        };
+        
+        
 
+
+
+        
         fetchUserName();
         fetchPaymentStatus();
         fetchFinishedPayments();
         fetchInProgressPayments();
+        fetchPayments(); 
+ 
+
 
     }, [roomId, navigate]);
+
+    useEffect(() => {
+        const fetchTeamMembers = async () => {
+            try {
+                const token = getCookie("token");
+                if (!token) return;
+    
+                const response = await axios.get(`https://storyteller-backend.site/api/rooms/${roomId}/members`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+    
+                console.log("📌 팀 멤버 목록 응답 데이터:", response.data);
+                setTeamMembers(response.data.data || []); // ✅ 팀 멤버 목록 상태 업데이트
+            } catch (error) {
+                console.error("🚨 팀 멤버 조회 실패:", error);
+            }
+        };
+    
+        fetchTeamMembers();
+    }, [roomId]); // ✅ roomId 변경 시 실행
+    
+    
 
     if (loading) {
         return <div>로딩 중...</div>;
@@ -203,6 +270,40 @@ function StartSettlement() {
                             </div>
                         )}
                     </div>
+
+                    {/* 🔹 정산 요청 내역 */}
+                    <h4 className="team-list-title">정산 요청 내역</h4>
+                    
+                    {/* 🔹 총 정산 요청 금액 표시 */}
+                    <h2 className="total-amount">
+                        총 <span className="highlight-amount">{totalAmount.toLocaleString()}원</span>
+                    </h2>
+
+                    <div className="settlement-list">
+                        {payments.length > 0 ? (
+                            payments.map((item) => (
+                                <div key={item.id} className="settlement-item">
+                                    <p className="settlement-user"><strong>{getUserName(item.userId)}</strong> {/* ✅ 등록한 유저의 이름 출력 */}
+                                    </p>
+                                    <div className="settlement-info">
+                                        <p className="settlement-amount">{item.amount.toLocaleString()}원 요청</p>
+                                        <p className="settlement-title">{item.title || "제목 없음"}</p> {/* ✅ title 필드 추가 */}
+                                    </div>
+                                    <div className="settlement-actions">
+
+                                        <button className="detail-button" onClick={() => navigate(`/room-detail/${roomId}/money-record-detail/${item.id}`)}>
+                                            상세 보기
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="empty-message-container">
+                                <p className="empty-message">현재 등록된 정산 요청이 없습니다.</p>
+                            </div>
+                        )}
+                    </div>
+
 
                 </div>
             </div>
