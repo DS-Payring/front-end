@@ -1,33 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import "../styles/paymentstatus.css";
 import "../styles/styles.css";
 import Header from "../components/Header";
+import cover1 from "../img/cover1.png";
+import cover2 from "../img/cover2.png";
+import cover3 from "../img/cover3.png";
+import cover4 from "../img/cover4.png";
 
 const PaymentStatus = () => {
-  const { roomId } = useParams();
   const [period, setPeriod] = useState(1);
   const [payments, setPayments] = useState([]);
   const [totalSettledAmount, setTotalSettledAmount] = useState(0);
   const [unSettledAmount, setUnSettledAmount] = useState(0);
 
+  // 쿠키에서 토큰 가져오기
   const getCookie = (name) => {
     const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
     return match ? match[2] : null;
   };
 
   useEffect(() => {
-    if (roomId) {
-      fetchPayments();
-    } else {
-      console.error("roomId가 없습니다.");
-    }
-  }, [roomId, period]);
+    fetchPayments();
+  }, [period]);
 
+  // 정산 상태 조회 API 호출
   const fetchPayments = async () => {
     const token = getCookie("token");
     try {
-      const response = await fetch(`/api/rooms/${roomId}/status?period=${period}`, {
+      const response = await fetch(`/api/rooms/status?period=${period}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -53,50 +53,74 @@ const PaymentStatus = () => {
     }
   };
 
+  // 랜덤으로 cover 이미지 선택
+  const getRandomCoverImage = () => {
+    const covers = [cover1, cover2, cover3, cover4];
+    const randomIndex = Math.floor(Math.random() * covers.length);
+    return covers[randomIndex];
+  };
+
   return (
-    <div className='mobile-container'>
+    <div className="mobile-container">
       <div className="header-wrapper">
         <Header />
       </div>
       <div className="payment-status-page">
-        <div className="content-wrapper flex-row">
-          <div>
-            <p>
-              정산 금액 <strong className="money">{totalSettledAmount.toLocaleString()} 원</strong>
-            </p>
-            <p>
-              미정산 금액 <strong className="money">{unSettledAmount.toLocaleString()} 원</strong>
-            </p>
-          </div>
-          <button className="settle-button">정산 하기</button>
-        </div>
-        <hr />
         <div className="content-wrapper">
-          <select
-            name="dropdown"
-            value={period}
-            onChange={(e) => setPeriod(Number(e.target.value))}
-          >
-            <option value={1}>1주일</option>
-            <option value={4}>1개월</option>
-            <option value={12}>3개월</option>
-            <option value={0}>전체</option>
-          </select>
-          <ul className="payment-list">
-            {payments.map((payment) => (
-              <li key={payment.roomId} className="payment-item">
+          <div className="amount-container">
+            <div className="settled-container">
+              <p>정산 금액</p>
+              <p>
+                <strong className="money">
+                  {totalSettledAmount.toLocaleString()} 원
+                </strong>
+              </p>
+            </div>
+            <div className="unsettled-container">
+              <p>미정산 금액</p>
+              <div className="unsettled-bottom">
+                <p>
+                  <strong className="money">
+                    {unSettledAmount.toLocaleString()} 원
+                  </strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <hr className="line" />
+        <div className="content-wrapper">
+          <div className="filter-container">
+            <select
+              className="drop-down"
+              name="dropdown"
+              value={period}
+              onChange={(e) => setPeriod(Number(e.target.value))}
+            >
+              <option value={1}>1주일</option>
+              <option value={4}>1개월</option>
+              <option value={12}>3개월</option>
+              <option value={0}>전체</option>
+            </select>
+          </div>
+          <ul className="room-list">
+            {payments.map((room) => (
+              <li key={room.roomId} className="room-item">
+                {/* 랜덤으로 선택된 이미지 */}
                 <img
-                  src={payment.roomImage}
-                  alt={payment.roomName}
+                  src={room.roomImage || getRandomCoverImage()}
+                  alt={room.roomName}
                   className="room-image"
                 />
+                {/* 정산이 완료되지 않은 경우 notification-dot 표시 */}
+                {room.roomStatus !== "SETTLED" && <div className="notification-dot"></div>}
                 <div className="payment-info">
-                  <span className="room-name">{payment.roomName}</span>
+                  <span className="room-name">{room.roomName}</span>
                   <span className="total-amount">
-                    총 {payment.totalAmount.toLocaleString()} 원
+                    총 {room.totalAmount.toLocaleString()} 원
                   </span>
                 </div>
-                {payment.roomStatus === "SETTLED" ? (
+                {room.roomStatus === "SETTLED" ? (
                   <span className="status-check">✔</span>
                 ) : (
                   <span className="status-x">❌</span>
