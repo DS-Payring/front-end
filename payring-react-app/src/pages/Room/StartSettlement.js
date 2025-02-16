@@ -7,6 +7,7 @@ import "../../styles/StartSettlement.css";
 import clearImage from "../../img/clear.png";
 import profile from "../../img/defaultImage.png";
 import ReminderModal from "../../components/ReminderModal";
+import BottonNav from "../../components/BottonNav";
 
 
 // ✅ 쿠키에서 특정 값을 가져오는 함수
@@ -177,18 +178,12 @@ function StartSettlement() {
             }
         };
         
-        
-
-
-
-        
         fetchUserName();
         fetchPaymentStatus();
         fetchFinishedPayments();
         fetchInProgressPayments();
         fetchPayments(); 
  
-
 
     }, [roomId, navigate]);
 
@@ -225,12 +220,12 @@ function StartSettlement() {
             </div>
             <div className="content-wrapper">
                 <div className="container">
-                    <h4 className="page-title">{userName}의 남은 정산 금액</h4>
+                    <h4 className="page-title">{userName}<span>님의 남은 정산 금액</span></h4>
                     <div className="start-settlement-list">
                         {pendingPayments.length > 0 ? (
                             pendingPayments.map((record, index) => (
                                 <div key={index} className="start-settlement-item">
-                                    <div className="start-settlement-content">
+                                    <div className="ss-settlement-content">
                                         <span className="settlemnet-user-name">{record.user}</span>
                                         <span className="list-amount">{record.amount.toLocaleString()}원</span>
                                     </div>
@@ -247,7 +242,7 @@ function StartSettlement() {
                     </div>
                     <span className="text-button">전체 송금 내역 확인하기</span>
 
-                    <h2 className="page-title">{userName}에게 아직 송금하지 않았어요</h2>
+                    <h2 className="page-title">{userName}<span>님에게 아직 송금하지 않았어요</span></h2>
                     <p className="total-amount">
                         총 <span className="highlight-amount">{moneyRecords.reduce((sum, rec) => sum + rec.amount, 0).toLocaleString()}원</span>
                     </p>
@@ -260,8 +255,10 @@ function StartSettlement() {
                                         <span className="settlement-user-name">{record.user}</span>
                                         <span className="list-amount">{record.amount.toLocaleString()}원</span>
                                     </div>
-                                    <button className="start-reminder-button">독촉하기</button>
-                                   
+                                    <button className="start-reminder-button">
+                                        독촉하기
+                                    </button>
+                                               
                                 </div>
                             ))
                         ) :  (
@@ -346,7 +343,7 @@ function StartSettlement() {
                         총 <span className="highlight-amount">{totalAmount.toLocaleString()}원</span>
                     </h2>
 
-                    <div className="settlement-list">
+                    <div className="ss-settlement-list">
                         {payments.length > 0 ? (
                             payments.map((item) => (
                                 <div key={item.id} className="settlement-item">
@@ -370,9 +367,8 @@ function StartSettlement() {
                             </div>
                         )}
                     </div>
-
-
                 </div>
+                <BottonNav />
             </div>
         </div>
     );

@@ -66,7 +66,7 @@ const TotalPending = () => {
         <p>정산 완료까지 <strong>{totalAmount.toLocaleString()}원</strong> 남음</p>
       </div>
     </section>
-  );
+  );  
 };
 
 export default TotalPending;

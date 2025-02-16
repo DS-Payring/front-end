@@ -141,6 +141,19 @@ const GroupList = () => {
         try {
             console.log(`🗑️ 방 삭제 요청: ID ${roomId}`);
     
+            // ✅ 방 상태 확인 (삭제 가능 여부 체크)
+            const roomDetails = await fetchRoomDetails(roomId);
+            if (!roomDetails) {
+                alert("🚨 방 정보를 불러올 수 없습니다.");
+                return;
+            }
+    
+            // ✅ 삭제 가능 상태: NOT_STARTED(정산 시작 전) 또는 COMPLETED(정산 완료)
+            if (roomDetails.roomStatus !== "NOT_STARTED" && roomDetails.roomStatus !== "COMPLETED") {
+                alert("🚨 정산이 진행 중인 방은 삭제할 수 없습니다.");
+                return;
+            }
+    
             const response = await fetch(`https://storyteller-backend.site/api/rooms/${roomId}`, {
                 method: "DELETE",
                 headers: {
@@ -150,7 +163,7 @@ const GroupList = () => {
             });
     
             if (response.status === 403) {
-                alert(`🚨 방 삭제 실패: 이미 정산이 시작된 방은 나갈 수 없습니다. (ID: ${roomId})`);
+                alert(`🚨 방 삭제 실패: 정산이 진행 중인 방은 삭제할 수 없습니다. (ID: ${roomId})`);
                 return;
             }
     
@@ -172,6 +185,7 @@ const GroupList = () => {
             alert(`❌ 방 삭제 실패: ${error.message}`);
         }
     };
+    
     
     
     
