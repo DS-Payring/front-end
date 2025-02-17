@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom"; // useParams를 임포트
 import "../../styles/transfersend.css";
 import "../../styles/styles.css";
 import Header from "../../components/Header";
@@ -11,13 +12,14 @@ const getToken = () => {
     ?.split("=")[1];
 };
 
-const TransferSend = ({ roomId }) => {
+const TransferSend = () => {
+  const { roomId } = useParams(); // useParams로 roomId를 가져옵니다.
   const [notSents, setNotSents] = useState([]); // 보내야 할 정산
   const [sents, setSents] = useState([]); // 내가 보낸 정산
 
   useEffect(() => {
     fetchTransfers();
-  }, []);
+  }, [roomId]); // roomId가 변경될 때마다 데이터를 다시 가져옵니다.
 
   // 송금 내역을 가져오는 함수
   const fetchTransfers = async () => {
@@ -65,7 +67,7 @@ const TransferSend = ({ roomId }) => {
   };
 
   return (
-    <div className='mobile-container'>
+    <div className="mobile-container">
       <div className="header-wrapper">
         <Header />
       </div>

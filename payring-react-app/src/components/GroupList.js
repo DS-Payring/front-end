@@ -129,7 +129,6 @@ const GroupList = () => {
         fetchGroups();
     }, []);
     
-
     const deleteRoom = async (roomId) => {
         const token = getCookie("token");
     
@@ -148,8 +147,11 @@ const GroupList = () => {
                 return;
             }
     
-            // ✅ 삭제 가능 상태: NOT_STARTED(정산 시작 전) 또는 COMPLETED(정산 완료)
-            if (roomDetails.roomStatus !== "NOT_STARTED" && roomDetails.roomStatus !== "COMPLETED") {
+            // ✅ 콘솔에 정산 상태 출력
+            console.log(`📌 방 ID: ${roomId}, 현재 정산 상태: ${roomDetails.roomStatus}`);
+    
+            // ✅ 삭제 가능 상태: NOT_STARTED(정산 시작 전), COLLECTING(정산 모금 중), COMPLETED(정산 완료)
+            if (!["NOT_STARTED", "COLLECTING", "COMPLETED"].includes(roomDetails.roomStatus)) {
                 alert("🚨 정산이 진행 중인 방은 삭제할 수 없습니다.");
                 return;
             }
@@ -188,21 +190,24 @@ const GroupList = () => {
     
     
     
+    // ✅ 삭제 가능 여부를 먼저 체크한 후, deleteRoom 실행
+    const toggleGroup = (roomId, roomStatus, event) => {
+        event.preventDefault(); // ✅ 기본 동작 방지
+        event.stopPropagation(); // ✅ 이벤트 전파 방지
+    
+        console.log(`🔍 삭제 버튼 클릭됨: ${roomId}, 상태: ${roomStatus}`);
+    
+        if (!["NOT_STARTED", "COMPLETED", "COLLECTING"].includes(roomStatus)) {
+            alert("🚨 정산이 진행 중인 방은 삭제할 수 없습니다.");
+            return;
+        }
+    
+        deleteRoom(roomId); // ✅ 삭제 가능하면 deleteRoom 호출 (중복 체크 제거)
+    };
     
 
-    const toggleGroup = (roomId, event) => {
-        event.stopPropagation();
-
-        setActiveGroups((prev) => {
-            const newState = { ...prev, [roomId]: !prev[roomId] };
-
-            if (!newState[roomId]) {
-                deleteRoom(roomId);
-            }
-
-            return newState;
-        });
-    };
+    
+        
 
     const handleGroupClick = async (roomId) => {
         const token = getCookie("token");
@@ -272,17 +277,21 @@ const GroupList = () => {
                             style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
                         >
                             <div className="group-info" style={{ display: "flex", alignItems: "center" }}>
-                                <img
-                                    src={group.roomImage ? `https://storyteller-backend.site/uploads/${group.roomImage}` : covers[index % covers.length]}
-                                    alt={`cover ${group.roomId}`}
-                                    style={{
-                                        objectFit: "cover",
-                                        width: "60px",
-                                        height: "60px",
-                                        borderRadius: "8px",
-                                        marginRight: "15px",
-                                    }}
-                                />
+                            <img
+                                src={group.roomImage 
+                                    ? `https://storyteller-backend.site/api/rooms/${group.roomImage}` 
+                                    : covers[index % covers.length]
+                                }
+                                alt={`cover ${group.roomId}`}
+                                style={{
+                                    objectFit: "cover",
+                                    width: "60px",
+                                    height: "60px",
+                                    borderRadius: "8px",
+                                    marginRight: "15px",
+                                }}
+                            />
+
                                 <div className="group-text">
                                     <p>{group.roomName} ({group.teamMembers.length}명)</p>
                                     <p>
@@ -293,10 +302,12 @@ const GroupList = () => {
                                 </div>
                             </div>
 
-                            <label className="switch" onClick={(e) => toggleGroup(group.roomId, e)}>
-                                <input type="checkbox" checked={activeGroups[group.roomId]} readOnly />
-                                <span className="slider round"></span>
-                            </label>
+                            <button 
+                                className="delete-button"
+                                onClick={(e) => toggleGroup(group.roomId, group.roomStatus, e)}
+                            >
+                                삭제
+                            </button>
                         </div>
                     ))
                 )}

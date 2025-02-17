@@ -270,6 +270,23 @@ h2{
     line-height: 1.4 !important;
 }
 
+.delete-button {
+    background-color: #FFFFFF; /* 흰 배경 */
+    color: #08313F; /* 글자색 */
+    border: 1.5px solid #08313F; /* 테두리 (기존보다 얇게) */
+    border-radius: 15px; /* 둥글게 */
+    padding: 4px 8px; /* 내부 여백 (기존의 절반) */
+    font-size: 12px; /* 글자 크기 줄이기 */
+    font-weight: bold; /* 글자 굵기 */
+    cursor: pointer; /* 마우스 오버 시 클릭 모양 */
+    transition: all 0.3s ease; /* 부드러운 전환 효과 */
+}
+
+.delete-button:hover {
+    background-color: #08313F; /* 호버 시 배경색 변경 */
+    color: #FFFFFF; /* 글자색 변경 */
+}
+
 
  
 /* 네비게이션 바 스타일 */

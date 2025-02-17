@@ -3,9 +3,9 @@ import axios from "axios";
 
 const API_BASE_URL = "https://storyteller-backend.site";
 
-// ✅ 쿠키에서 토큰을 가져오는 함수
+// ✅ 쿠키에서 특정 값을 가져오는 함수
 const getCookie = (name) => {
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
     return match ? match[2] : null;
 };
 

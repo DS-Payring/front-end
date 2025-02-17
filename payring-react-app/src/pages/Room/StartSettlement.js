@@ -48,6 +48,10 @@ function StartSettlement() {
         }
     };
 
+    const handleSettlement = () => {
+        navigate(`/transfer/${roomId}`);  // roomId를 URL에 포함시켜서 transfer 페이지로 이동
+    };
+
     useEffect(() => {
         const fetchInProgressPayments = async () => {
             try {
@@ -229,7 +233,7 @@ function StartSettlement() {
                                         <span className="settlemnet-user-name">{record.user}</span>
                                         <span className="list-amount">{record.amount.toLocaleString()}원</span>
                                     </div>
-                                    <button className="start-settlement-button">정산 보내기</button>
+                                    <button className="start-settlement-button" onClick={handleSettlement}>정산 보내기</button>
                                 </div>
                             ))
                         ) : (
@@ -240,7 +244,13 @@ function StartSettlement() {
                             </div>
                         )}
                     </div>
-                    <span className="text-button">전체 송금 내역 확인하기</span>
+                    <span
+                        className="text-button"
+                        onClick={() => navigate(`/transfer-send/${roomId}`)} // roomId를 포함하여 페이지 이동
+                    >
+                        전체 송금 내역 확인하기
+                    </span>
+
 
                     <h2 className="page-title">{userName}<span>님에게 아직 송금하지 않았어요</span></h2>
                     <p className="total-amount">
@@ -252,7 +262,7 @@ function StartSettlement() {
                             moneyRecords.map((record, index) => (
                                 <div key={index} className="start-settlement-item">
                                     <div className="start-settlement-content">
-                                        <span className="settlement-user-name">{record.user}</span>
+                                        <span className="nn-settlement-user-name">{record.user}</span>
                                         <span className="list-amount">{record.amount.toLocaleString()}원</span>
                                     </div>
                                     <button className="start-reminder-button">
@@ -269,7 +279,13 @@ function StartSettlement() {
                             </div>
                         )}
                     </div>
-                    <span className="text-button">전체 송금 현황 확인하기</span>
+                    <span
+                        className="text-button"
+                        onClick={() => navigate(`/transfer-receive/${roomId}`)} // roomId를 포함하여 페이지 이동
+                    >
+                        전체 송금 현황 확인하기
+                    </span>
+
                     {/* 🔹 정산 완료한 팀원 */}
                     <h4 className="team-list-title">정산 완료한 팀원</h4>
                     <div className="completed-members">
@@ -336,7 +352,7 @@ function StartSettlement() {
                 </div>
 
                     {/* 🔹 정산 요청 내역 */}
-                    <h4 className="team-list-title">정산 요청 내역</h4>
+                    <h4 className="team-list-title">정산 요청 내역 다시</h4>
                     
                     {/* 🔹 총 정산 요청 금액 표시 */}
                     <h2 className="total-amount">

@@ -4,7 +4,7 @@ import "../../styles/transfer.css";
 import "../../styles/styles.css";
 import Header from "../../components/Header";
 
-const Transfer = () => {
+const Transfer = ({ roomId }) => { // Make sure roomId is passed down as a prop from StartSettlement
   const navigate = useNavigate();
   const [image, setImage] = useState(null);
   const [file, setFile] = useState(null); // 실제 파일 데이터 저장
@@ -22,42 +22,11 @@ const Transfer = () => {
     return cookies[name] || null;
   };
 
-  // 사용자 정보 요청 (user-info API)
-  const fetchUserInfo = async () => {
-    try {
-      const token = getCookie("token"); // 쿠키에서 token 가져오기
-      console.log("Token:", token); // token 값 확인
-
-      const response = await fetch("/api/users", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`, // Authorization 헤더에 token 포함
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("사용자 정보를 불러오는 데 오류가 발생했습니다.");
-      }
-
-      const data = await response.json();
-      if (data) {
-        setUserInfo(data); // 사용자 정보 설정
-      } else {
-        alert("사용자 정보를 불러오는데 실패했습니다.");
-      }
-    } catch (error) {
-      console.error("Error fetching user info:", error);
-      alert(error.message || "사용자 정보를 불러오는 데 오류가 발생했습니다.");
-    }
-  };
-
   // receiver-info API 요청
-  const fetchReceiverInfo = async () => {
+  const fetchReceiverInfo = async (transferId) => {
     try {
       const token = getCookie("token"); // 쿠키에서 token 가져오기
-      console.log("Token:", token); // token 값 확인
-
-      const response = await fetch(`/api/rooms/transfers/${userInfo.transferId}/receiver-info`, {
+      const response = await fetch(`/api/rooms/transfers/${transferId}/receiver-info`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`, // Authorization 헤더에 token 포함
@@ -69,22 +38,57 @@ const Transfer = () => {
       }
 
       const data = await response.json();
+      console.log("Receiver Info Response: ", data); // 디버그용 출력
+
       if (data.code === "SUCCESS_CREATE_TEMP") {
-        const { roomId, roomName, userId, username, payUrl, accounts } = data.data;
+        const { roomName, userId, username, payUrl, accounts } = data.data;
         setInviteData({
-          roomId,
           roomName,
           userId,
           username,
           payUrl,
           accounts,
         });
+        setUserInfo((prevState) => ({
+          ...prevState,
+          transferId: data.data.transferId, // transferId 저장
+        }));
       } else {
         alert("송금 정보를 불러오는데 실패했습니다.");
       }
     } catch (error) {
-      console.error("Error fetching receiver info:", error);
       alert(error.message || "송금 정보를 불러오는 데 오류가 발생했습니다.");
+    }
+  };
+
+  // 송금 상태 API 요청
+  const fetchPaymentStatus = async () => {
+    try {
+      const token = getCookie("token"); // 쿠키에서 token 가져오기
+      const response = await fetch(`/api/rooms/${roomId}/payments/status`, { // roomId을 사용하여 API 요청
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`, // Authorization 헤더에 token 포함
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("송금 상태를 불러오는 데 오류가 발생했습니다.");
+      }
+
+      const data = await response.json();
+      if (data.code === "SUCCESS") {
+        // 송금 상태에 따라 transferId 저장
+        setUserInfo((prevState) => ({
+          ...prevState,
+          transferId: data.data.transferId, // transferId 저장
+        }));
+        fetchReceiverInfo(data.data.transferId); // 송금 상태 확인 후 송금 대상 정보 요청
+      } else {
+        alert("송금 상태를 불러오는 데 실패했습니다.");
+      }
+    } catch (error) {
+      alert(error.message || "송금 상태를 불러오는 데 오류가 발생했습니다.");
     }
   };
 
@@ -176,31 +180,31 @@ const Transfer = () => {
   };
 
   useEffect(() => {
-    fetchUserInfo(); // 사용자 정보 요청
-  }, []);
-
-  useEffect(() => {
-    if (userInfo.transferId) {
-      fetchReceiverInfo(); // 사용자의 송금 정보 요청
+    if (roomId) {
+      fetchPaymentStatus(); // 송금 상태 요청
     }
-  }, [userInfo]);
+  }, [roomId]);
 
   return (
-    <div className='mobile-container'>
+    <div className="mobile-container">
       <div className="header-wrapper">
         <Header />
       </div>
       <div className="transfer-page">
-        <p className="room-name">{inviteData.roomName}</p>
-        <h3>{inviteData.username} 님께</h3>
-        <p>송금해야 하는 금액<strong> {userInfo.amount && userInfo.amount.toLocaleString()}원</strong></p>
+        <p className="room-name">{inviteData.roomName || "방 이름 없음"}</p>
+        <h3>{inviteData.username || "이름 없음"} 님께</h3>
+        <p>
+          송금해야 하는 금액
+          <strong>
+            {userInfo.amount ? userInfo.amount.toLocaleString() : "금액 없음"}원
+          </strong>
+        </p>
 
         {inviteData.payUrl && (
           <button
             onClick={() => window.location.href = inviteData.payUrl}
             className="kakao-btn"
           >
-            <img src="https://i.namu.wiki/i/DRTBUHA314XYTx-pkzY4XSmQ0Job0j10vQhiETotjLCGUULQemriSC67Yh9UCsYq7Dw7WyvK0GkP9f3jP8r8gA.svg" alt="카카오 로고" className="kakao-logo" />
             카카오로 송금하기
           </button>
         )}
@@ -208,13 +212,17 @@ const Transfer = () => {
         <p className="or-text">또는</p>
 
         <div className="bank-info">
-          {inviteData.accounts && inviteData.accounts.map((account, index) => (
-            <div key={index}>
-              <span className="bank-name">{account.bankName}</span>
-              <span className="account-number">{account.accountNo}</span>
-              <span className="account-holder">{account.receiver}</span>
-            </div>
-          ))}
+          {inviteData.accounts && inviteData.accounts.length > 0 ? (
+            inviteData.accounts.map((account, index) => (
+              <div key={index}>
+                <span className="bank-name">{account.bankName}</span>
+                <span className="account-number">{account.accountNo}</span>
+                <span className="account-holder">{account.receiver}</span>
+              </div>
+            ))
+          ) : (
+            <p>송금 계좌 정보가 없습니다.</p>
+          )}
         </div>
 
         {/* 이미지 업로드 아이콘만 표시 */}

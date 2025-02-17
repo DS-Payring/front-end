@@ -74,7 +74,19 @@
 .settlemnet-user-name {
     margin-right: 20px;
 }
+.nn-settlement-user-name{
+    font-weight: bold;
+    margin-right: 20px;
+    margin-left: 5px;
+}
+.total-amount{
+    margin-left: 13px;
+}
 
+h2.total-amount {
+    margin-left: 0;
+    margin-top: 0;
+}
 /* 금액 스타일 */
 .list-amount {
     font-size: 16px;
