@@ -29,9 +29,9 @@ function App() {
         <Route path="/edit" element={<EditPage />} />
         <Route path="/invite" element={<Invite />} />
         <Route path="/payment-status" element={<PaymentStatus />} />
-        <Route path="/transfer" element={<Transfer />} />
-        <Route path="/transfer-recieve" element={<TransferRecieve />} />
-        <Route path="/transfer-send" element={<TransferSend />} />
+        <Route path="/transfer/:roomId" element={<Transfer />} />
+        <Route path="/transfer-receive/:roomId" element={<TransferRecieve />} />
+        <Route path="/transfer-send/:roomId" element={<TransferSend />} />
 
         <Route path="/create-room" element={<CreateRoom/>} />
         <Route path="/room-detail/:id" element={<RoomDetail />} />
